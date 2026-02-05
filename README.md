@@ -121,8 +121,4 @@ This ensures **consistency**, **traceability**, and **safe releases**.
 - Approval gates for production  
 - Parameterized deployment templates  
 
----
 
-## 👤 Maintainer
-
-**Integration / MuleSoft DevOps Team**
