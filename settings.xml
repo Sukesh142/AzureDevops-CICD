@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/settings/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/settings/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <pluginGroups>
+    <pluginGroup>org.mule.tools</pluginGroup>
+  </pluginGroups>
+
+  <servers>
+    <server>
+      <id>Sukesh-Talari</id>
+      <username>${env.CICD_SETTINGS_CLIENT_ID}</username>
+      <password>${env.CICD_SETTINGS_CLIENT_SECRET}</password>
+    </server>
+    <server>
+      <id>MuleRepository</id>
+      <username>${env.MAVEN_NEXUS_USERNAME}</username>
+      <password>${env.MAVEN_NEXUS_PASSWORD}</password>
+    </server>
+    <server>
+      <id>anypoint-exchange-v3</id>
+      <username>${env.anypoint_client_id}</username>
+      <password>${env.anypoint_client_secret}</password>
+    </server>
+  </servers>
+
+  <profiles>
+    <profile>
+      <id>Mule</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <repositories>
+        <repository>
+          <id>mulesoft-releases</id>
+          <name>MuleSoft Releases Repository</name>
+          <url>https://repository.mulesoft.org/releases/</url>
+          <layout>default</layout>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>mulesoft-snapshots</id>
+          <name>MuleSoft Snapshot Repository</name>
+          <url>https://repository.mulesoft.org/snapshots/</url>
+          <layout>default</layout>
+          <releases><enabled>false</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>MuleRepository</id>
+          <name>MuleRepository</name>
+          <url>https://repository.mulesoft.org/nexus-ee/content/repositories/releases-ee/</url>
+          <layout>default</layout>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>Injazat-Exchange</id>
+          <name>Corporate Exchange</name>
+          <url>https://maven.eu1.anypoint.mulesoft.com/api/v3/organizations/0ff2964a-5697-4a8c-8ecc-0e969998e667/maven</url>
+          <layout>default</layout>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+      </repositories>
+    </profile>
+
+    <profile>
+      <id>mule-extra-repos</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <repositories>
+        <repository>
+          <id>mule-public</id>
+          <url>https://repository.mulesoft.org/nexus/content/repositories/public</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>mulesoft-releases</id>
+          <name>MuleSoft Release Plugins</name>
+          <layout>default</layout>
+          <url>https://repository.mulesoft.org/releases/</url>
+          <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+        <pluginRepository>
+          <id>mule-public</id>
+          <url>https://repository.mulesoft.org/nexus/content/repositories/public</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+</settings>

@@ -1,0 +1,68 @@
+parameters:
+  - name: environment
+    type: string
+  - name: mule_env
+    type: string
+
+steps:
+  # Step 1: Checkout repo
+  - checkout: self
+
+  # Step 2: Debug parameters
+  - script: |
+      echo "Environment = ${{ parameters.environment }}"
+      echo "Mule Environment = ${{ parameters.mule_env }}"
+    displayName: "Verify Parameters"
+
+  # Step 3: Download secure settings.xml
+  - task: DownloadSecureFile@1
+    name: settingsXml
+    inputs:
+      secureFile: 'settings.xml'
+
+  # Step 4: Publish to Anypoint Exchange
+  - task: Maven@4
+    displayName: 'Publish to Anypoint Exchange'
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'clean deploy'
+      options: >
+        -DskipTests
+        -Dmunit.skip=true
+        -DskipMunitTests
+        -s $(settingsXml.secureFilePath)
+      mavenOptions: '$(MAVEN_OPTS)'
+    env:
+      CICD_SETTINGS_CLIENT_ID: $(CICD_SETTINGS_CLIENT_ID)
+      CICD_SETTINGS_CLIENT_SECRET: $(CICD_SETTINGS_CLIENT_SECRET)
+
+  # Step 5: Deploy to CloudHub 2.0
+  - task: Maven@4
+    displayName: 'Deploy to ${{ parameters.environment }}'
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'deploy'
+      options: >
+        -Dmaven.deploy.skip=true
+        -DmuleDeploy -X
+        -DskipMunitTests
+        -Denvironment=${{ parameters.environment }}
+        -Dmule_env=${{ parameters.mule_env }}
+        -Dmule.forceDeploy=true
+        -DmuleDeploy.createIfNotExist=true
+        -Dapp.runtime.version=$(anypoint_app_runtime)
+        -Dapp.java.version=$(app.java.version)
+        -Dapp.releaseChannel.name=$(app.releaseChannel.name)
+        -DbusinessGroupId=$(businessGroupId)
+        -Danypoint.platform.url=$(anypoint_platform_URL)
+        -Danypoint.environment=$(anypoint.environment)
+        -Danypoint.spaceName=$(anypoint.spaceName)
+        -Danypoint.connectedApp.id=$(CICD_SETTINGS_CLIENT_ID)
+        -Danypoint.connectedApp.secret=$(CICD_SETTINGS_CLIENT_SECRET)
+        -Dmule.secure.key=$(mule.secure.key)
+        -P${{ parameters.mule_env }}
+        -s $(settingsXml.secureFilePath)
+      mavenOptions: '$(MAVEN_OPTS)'
+    env:
+      CICD_SETTINGS_CLIENT_ID: $(CICD_SETTINGS_CLIENT_ID)
+      CICD_SETTINGS_CLIENT_SECRET: $(CICD_SETTINGS_CLIENT_SECRET)

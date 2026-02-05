@@ -1,0 +1,99 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  # Shared variables for all environments
+  - group: mule-deploy-vars
+
+  # Optimize Maven local repo
+  - name: MAVEN_OPTS
+    value: "-Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository"
+
+pool:
+  vmImage: ubuntu-latest
+
+# ---------------- STAGES ----------------
+stages:
+
+  # ---------- BUILD STAGE ----------
+  - stage: Build
+    displayName: "Build Application"
+    jobs:
+      - job: BuildJob
+        displayName: "Build Job"
+        steps:
+          - checkout: self
+
+          # Download secure settings.xml file
+          - task: DownloadSecureFile@1
+            name: settingsXml
+            inputs:
+              secureFile: 'settings.xml'
+
+          # Build the Mule app
+          - task: Maven@4
+            displayName: "Build with Maven"
+            inputs:
+              mavenPomFile: pom.xml
+              goals: clean package
+              options: >
+                -DskipTests
+                -DskipMunitTests
+                -Dmunit.skip=true
+                -s $(settingsXml.secureFilePath)
+                -Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository
+              mavenOptions: '$(MAVEN_OPTS)'
+            env:
+              CICD_SETTINGS_CLIENT_ID: $(CICD_SETTINGS_CLIENT_ID)
+              CICD_SETTINGS_CLIENT_SECRET: $(CICD_SETTINGS_CLIENT_SECRET)
+
+  # ---------- QA STAGE ----------
+  - stage: DeployQA
+    displayName: "Deploy to QA"
+    dependsOn: Build
+    condition: eq(variables['Build.SourceBranchName'], 'develop')
+    variables:
+      - group: mule-vars-qa
+    jobs:
+      - job: DeployQAJob
+        displayName: "Deploy to QA"
+        steps:
+          - template: .azure-pipelines/deploy.yml
+            parameters:
+              environment: "QA"
+              mule_env: "qa"
+
+  # ---------- UAT STAGE ----------
+  - stage: DeployUAT
+    displayName: "Deploy to UAT"
+    dependsOn: DeployQA
+    condition: eq(variables['Build.SourceBranchName'], 'develop')
+    variables:
+      - group: mule-vars-uat
+    jobs:
+      - job: DeployUATJob
+        displayName: "Deploy to UAT"
+        steps:
+          - template: .azure-pipelines/deploy.yml
+            parameters:
+              environment: "UAT"
+              mule_env: "uat"
+
+  # ---------- PROD STAGE ----------
+  - stage: DeployPROD
+    displayName: "Deploy to PROD"
+    dependsOn: DeployUAT
+    condition: eq(variables['Build.SourceBranchName'], 'main')
+    variables:
+      - group: mule-vars-prod
+    jobs:
+      - job: DeployProdJob
+        displayName: "Deploy to PROD"
+        steps:
+          - template: .azure-pipelines/deploy.yml
+            parameters:
+              environment: "PROD"
+              mule_env: "prod"
